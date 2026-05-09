@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="popup.css">
+    <title>Agent Context Bridge</title>
+  </head>
+  <body>
+    <main>
+      <section class="result" id="result" hidden>
+        <label>
+          Context link
+          <input id="contextLink" readonly>
+        </label>
+      </section>
+
+      <section class="sources">
+        <ul id="sourceList" aria-label="Selected sources">
+          <li class="sourceItem placeholder">
+            <button id="addCurrent" class="iconButton" aria-label="Add current page">+</button>
+            <span>
+              <span class="sourceTitle">Current page</span>
+              <span class="sourceMeta">Add this page as a selected source</span>
+            </span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="primaryAction" aria-label="Primary action">
+        <button id="publish">Publish</button>
+      </section>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

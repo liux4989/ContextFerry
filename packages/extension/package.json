@@ -1,0 +1,20 @@
+{
+  "name": "@agent-context-bridge/extension",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@agent-context-bridge/shared": "0.1.0",
+    "@mozilla/readability": "^0.6.0",
+    "turndown": "^7.2.2"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.0",
+    "@types/turndown": "^5.0.5",
+    "esbuild": "^0.27.0",
+    "fs-extra": "^11.3.2"
+  }
+}

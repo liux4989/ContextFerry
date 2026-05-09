@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Agent Context Bridge",
+  "description": "Extract readable website content and publish it as one agent-friendly context link.",
+  "version": "0.1.0",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Bridge page to agent context"
+  },
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

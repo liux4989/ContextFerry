@@ -1,0 +1,17 @@
+{
+  "name": "agent-context-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @agent-context-bridge/shared && npm run build -w @agent-context-bridge/server && npm run build -w @agent-context-bridge/extension",
+    "dev:server": "npm run dev -w @agent-context-bridge/server",
+    "typecheck": "npm run typecheck -w @agent-context-bridge/shared && npm run typecheck -w @agent-context-bridge/server && npm run typecheck -w @agent-context-bridge/extension"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
