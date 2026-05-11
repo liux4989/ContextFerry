@@ -70,6 +70,12 @@ PUBLISH_REPO_DIR=/path/to/pages/repo \
 npm run dev:server
 ```
 
+For this repo, use:
+
+```bash
+npm run dev:server:pages
+```
+
 Optional settings:
 
 - `PUBLISH_CONTEXT_DIR`: output folder inside the repo, default `contexts`.

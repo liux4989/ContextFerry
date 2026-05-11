@@ -6,6 +6,7 @@
   "scripts": {
     "build": "pnpm --filter @context-ferry/shared build && pnpm --filter @context-ferry/server build && pnpm --filter @context-ferry/extension build",
     "dev:server": "pnpm --filter @context-ferry/server dev",
+    "dev:server:pages": "PUBLISH_MODE=github-pages GITHUB_PAGES_BASE_URL=https://liux4989.github.io/ContextFerry PUBLISH_REPO_DIR=$PWD pnpm --filter @context-ferry/server dev",
     "typecheck": "pnpm --filter @context-ferry/shared typecheck && pnpm --filter @context-ferry/server typecheck && pnpm --filter @context-ferry/extension typecheck"
   },
   "devDependencies": {
