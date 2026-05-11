@@ -1,13 +1,23 @@
 import { randomUUID } from "node:crypto";
+import { execFile } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 import cors from "cors";
 import express from "express";
 import { createAgentContext, type AgentContext, type CreateContextRequest, type CreateContextResponse } from "@context-ferry/shared";
 
+const execFileAsync = promisify(execFile);
+
 const port = Number(process.env.PORT || 8787);
 const publicBaseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${port}`;
 const dataDir = process.env.DATA_DIR || path.resolve(process.cwd(), "data", "contexts");
+const publishMode = process.env.PUBLISH_MODE || "local";
+const publishRepoDir = process.env.PUBLISH_REPO_DIR || process.cwd();
+const publishContextDir = process.env.PUBLISH_CONTEXT_DIR || "contexts";
+const publishGitRemote = process.env.PUBLISH_GIT_REMOTE || "origin";
+const publishCommitPrefix = process.env.PUBLISH_COMMIT_PREFIX || "Publish context";
+const githubPagesBaseUrl = process.env.GITHUB_PAGES_BASE_URL?.replace(/\/+$/, "");
 
 const app = express();
 
@@ -28,10 +38,8 @@ app.post("/api/contexts", async (req, res) => {
   const id = randomUUID();
   const context = createAgentContext(body, id);
   await saveContext(context);
-
-  const response: CreateContextResponse = {
-    url: `${publicBaseUrl}/c/${id}`
-  };
+  const url = await publishContext(context);
+  const response: CreateContextResponse = { url };
 
   res.status(201).json(response);
 });
@@ -59,7 +67,7 @@ app.get("/c/:id", async (req, res) => {
 await mkdir(dataDir, { recursive: true });
 
 app.listen(port, () => {
-  console.log(`Context Ferry server listening on ${publicBaseUrl}`);
+  console.log(`Context Ferry server listening on ${publicBaseUrl} (${publishMode} publish mode)`);
 });
 
 async function saveContext(context: AgentContext): Promise<void> {
@@ -82,6 +90,50 @@ function contextPath(id: string): string {
   return path.join(dataDir, `${id}.json`);
 }
 
+async function publishContext(context: AgentContext): Promise<string> {
+  if (publishMode === "local") {
+    return `${publicBaseUrl}/c/${context.id}`;
+  }
+
+  if (publishMode === "github-pages") {
+    return publishToGitHubPages(context);
+  }
+
+  throw new Error(`Unsupported PUBLISH_MODE: ${publishMode}`);
+}
+
+async function publishToGitHubPages(context: AgentContext): Promise<string> {
+  if (!githubPagesBaseUrl) {
+    throw new Error("GITHUB_PAGES_BASE_URL is required when PUBLISH_MODE=github-pages");
+  }
+
+  const relativeDir = path.join(publishContextDir, context.id);
+  const outputDir = path.join(publishRepoDir, relativeDir);
+  const htmlPath = path.join(outputDir, "index.html");
+  const markdownPath = path.join(outputDir, "context.md");
+
+  await mkdir(outputDir, { recursive: true });
+  await writeFile(htmlPath, renderStaticContext(context), "utf8");
+  await writeFile(markdownPath, context.markdown, "utf8");
+  await runGit(["add", path.relative(publishRepoDir, htmlPath), path.relative(publishRepoDir, markdownPath)]);
+  await runGit(["commit", "-m", `${publishCommitPrefix}: ${context.title}`]);
+  await runGit(["push", publishGitRemote, "HEAD"]);
+
+  return `${githubPagesBaseUrl}/${toUrlPath(relativeDir)}/`;
+}
+
+async function runGit(args: string[]): Promise<void> {
+  try {
+    await execFileAsync("git", args, { cwd: publishRepoDir });
+  } catch (error) {
+    if (isExecError(error)) {
+      const detail = [error.stderr, error.stdout].filter(Boolean).join("\n").trim();
+      throw new Error(`git ${args.join(" ")} failed${detail ? `: ${detail}` : ""}`);
+    }
+    throw error;
+  }
+}
+
 function renderContext(context: AgentContext): string {
   const body = `
     <main>
@@ -91,6 +143,27 @@ function renderContext(context: AgentContext): string {
         <p>Captured ${escapeHtml(context.createdAt)}</p>
         <nav>
           <a href="/api/contexts/${context.id}">Raw Markdown</a>
+        </nav>
+      </header>
+      <section>
+        <h2>Agent-Friendly Context</h2>
+        <pre>${escapeHtml(context.markdown)}</pre>
+      </section>
+    </main>
+  `;
+
+  return renderPage(context.title, body);
+}
+
+function renderStaticContext(context: AgentContext): string {
+  const body = `
+    <main>
+      <header>
+        <p class="eyebrow">Agent context</p>
+        <h1>${escapeHtml(context.title)}</h1>
+        <p>Captured ${escapeHtml(context.createdAt)}</p>
+        <nav>
+          <a href="./context.md">Raw Markdown</a>
         </nav>
       </header>
       <section>
@@ -134,6 +207,10 @@ function renderPage(title: string, body: string): string {
 </html>`;
 }
 
+function toUrlPath(value: string): string {
+  return value.split(path.sep).map(encodeURIComponent).join("/");
+}
+
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => {
     switch (char) {
@@ -145,4 +222,8 @@ function escapeHtml(value: string): string {
       default: return char;
     }
   });
+}
+
+function isExecError(error: unknown): error is Error & { stdout?: string; stderr?: string } {
+  return error instanceof Error;
 }

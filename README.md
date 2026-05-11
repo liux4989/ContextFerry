@@ -58,3 +58,35 @@ Response:
 ```
 
 The public context page is `GET /c/:id`. The raw agent context is `GET /api/contexts/:id` as `text/markdown`.
+
+## GitHub Pages Publishing
+
+The extension still posts extracted content to the local server. The server can then publish the generated static artifact to a GitHub Pages repo and return the Pages link.
+
+```bash
+PUBLISH_MODE=github-pages \
+GITHUB_PAGES_BASE_URL=https://USER.github.io/REPO \
+PUBLISH_REPO_DIR=/path/to/pages/repo \
+npm run dev:server
+```
+
+Optional settings:
+
+- `PUBLISH_CONTEXT_DIR`: output folder inside the repo, default `contexts`.
+- `PUBLISH_GIT_REMOTE`: git remote to push, default `origin`.
+- `PUBLISH_COMMIT_PREFIX`: commit message prefix, default `Publish context`.
+
+In `github-pages` mode, `POST /api/contexts` writes:
+
+```text
+contexts/:id/index.html
+contexts/:id/context.md
+```
+
+Then it runs `git add`, `git commit`, and `git push`, and returns:
+
+```json
+{ "url": "https://USER.github.io/REPO/contexts/:id/" }
+```
+
+GitHub Pages may take a short moment to serve the new file after push succeeds.
