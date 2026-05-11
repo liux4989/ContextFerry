@@ -86,7 +86,7 @@ contexts/:id/context.md
 Then it runs `git add`, `git commit`, and `git push`, and returns:
 
 ```json
-{ "url": "https://USER.github.io/REPO/contexts/:id/" }
+{ "url": "https://USER.github.io/REPO/contexts/:id/index.html" }
 ```
 
 GitHub Pages may take a short moment to serve the new file after push succeeds.

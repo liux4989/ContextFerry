@@ -119,7 +119,7 @@ async function publishToGitHubPages(context: AgentContext): Promise<string> {
   await runGit(["commit", "-m", `${publishCommitPrefix}: ${context.title}`]);
   await runGit(["push", publishGitRemote, "HEAD"]);
 
-  return `${githubPagesBaseUrl}/${toUrlPath(relativeDir)}/`;
+  return `${githubPagesBaseUrl}/${toUrlPath(relativeDir)}/index.html`;
 }
 
 async function runGit(args: string[]): Promise<void> {
