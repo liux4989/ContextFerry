@@ -1,5 +1,5 @@
 {
-  "name": "@agent-context-bridge/server",
+  "name": "@context-ferry/server",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -11,7 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@agent-context-bridge/shared": "0.1.0",
+    "@context-ferry/shared": "workspace:*",
     "cors": "^2.8.5",
     "express": "^5.1.0"
   },

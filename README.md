@@ -1,4 +1,4 @@
-# Agent Context Bridge
+# Context Ferry
 
 Chrome extension and local publishing server for turning inaccessible or fragmented web content into stable, agent-friendly context links.
 

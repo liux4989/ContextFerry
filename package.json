@@ -1,15 +1,12 @@
 {
-  "name": "agent-context-bridge",
+  "name": "context-ferry",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
-    "build": "npm run build -w @agent-context-bridge/shared && npm run build -w @agent-context-bridge/server && npm run build -w @agent-context-bridge/extension",
-    "dev:server": "npm run dev -w @agent-context-bridge/server",
-    "typecheck": "npm run typecheck -w @agent-context-bridge/shared && npm run typecheck -w @agent-context-bridge/server && npm run typecheck -w @agent-context-bridge/extension"
+    "build": "pnpm --filter @context-ferry/shared build && pnpm --filter @context-ferry/server build && pnpm --filter @context-ferry/extension build",
+    "dev:server": "pnpm --filter @context-ferry/server dev",
+    "typecheck": "pnpm --filter @context-ferry/shared typecheck && pnpm --filter @context-ferry/server typecheck && pnpm --filter @context-ferry/extension typecheck"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

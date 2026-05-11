@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import cors from "cors";
 import express from "express";
-import { createAgentContext, type AgentContext, type CreateContextRequest, type CreateContextResponse } from "@agent-context-bridge/shared";
+import { createAgentContext, type AgentContext, type CreateContextRequest, type CreateContextResponse } from "@context-ferry/shared";
 
 const port = Number(process.env.PORT || 8787);
 const publicBaseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${port}`;
@@ -59,7 +59,7 @@ app.get("/c/:id", async (req, res) => {
 await mkdir(dataDir, { recursive: true });
 
 app.listen(port, () => {
-  console.log(`Agent Context Bridge server listening on ${publicBaseUrl}`);
+  console.log(`Context Ferry server listening on ${publicBaseUrl}`);
 });
 
 async function saveContext(context: AgentContext): Promise<void> {

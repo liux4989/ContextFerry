@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Agent Context Bridge",
+  "name": "Context Ferry",
   "description": "Extract readable website content and publish it as one agent-friendly context link.",
   "version": "0.1.0",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Bridge page to agent context"
+    "default_title": "Ferry page into agent context"
   },
   "permissions": [
     "activeTab",
@@ -22,7 +22,7 @@
       "js": [
         "content.js"
       ],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ]
 }

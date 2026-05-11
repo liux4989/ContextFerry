@@ -1,5 +1,5 @@
 {
-  "name": "@agent-context-bridge/extension",
+  "name": "@context-ferry/extension",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -7,7 +7,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@agent-context-bridge/shared": "0.1.0",
+    "@context-ferry/shared": "workspace:*",
     "@mozilla/readability": "^0.6.0",
     "turndown": "^7.2.2"
   },

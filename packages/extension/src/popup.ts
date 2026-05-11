@@ -1,4 +1,4 @@
-import type { AgentDocument, CreateContextResponse } from "@agent-context-bridge/shared";
+import type { AgentDocument, CreateContextResponse } from "@context-ferry/shared";
 import type { ExtractPageResponse } from "./messages";
 
 const defaultServerUrl = "http://localhost:8787";
@@ -73,13 +73,18 @@ async function createContext(sources: AgentDocument[], title: string): Promise<C
   const serverUrl = normalizedServerUrl();
   await chrome.storage.local.set({ [storageKeys.serverUrl]: serverUrl });
 
-  const response = await fetch(`${serverUrl}/api/contexts`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json"
-    },
-    body: JSON.stringify({ title, sources })
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${serverUrl}/api/contexts`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({ title, sources })
+    });
+  } catch {
+    throw new Error(`Could not reach server at ${serverUrl}`);
+  }
 
   if (!response.ok) {
     throw new Error(`Server returned ${response.status}`);

@@ -1,4 +1,4 @@
-import type { AgentDocument } from "@agent-context-bridge/shared";
+import type { AgentDocument } from "@context-ferry/shared";
 
 export type ExtractPageMessage = {
   type: "extract-page";
