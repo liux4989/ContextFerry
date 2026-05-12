@@ -1,0 +1,34 @@
+[
+  {
+    "name": "steipete-normal",
+    "source": "twitter",
+    "type": "normal",
+    "url": "https://x.com/steipete/status/2053456429420265662",
+    "actual": "checks/twitter-actual/normal.md",
+    "baseline": "baselines/twitter/normal.md"
+  },
+  {
+    "name": "langchain-repost",
+    "source": "twitter",
+    "type": "repost",
+    "url": "https://x.com/LangChain_OSS/status/2053951701850456222",
+    "actual": "checks/twitter-actual/repost.md",
+    "baseline": "baselines/twitter/repost.md"
+  },
+  {
+    "name": "bcherny-thread",
+    "source": "twitter",
+    "type": "thread",
+    "url": "https://x.com/bcherny/status/2044847848035156457",
+    "actual": "checks/twitter-actual/thread.md",
+    "baseline": "baselines/twitter/thread.md"
+  },
+  {
+    "name": "hwchase17-article",
+    "source": "twitter",
+    "type": "article",
+    "url": "https://x.com/hwchase17/status/2053157547985834227",
+    "actual": "checks/twitter-actual/article.md",
+    "baseline": "baselines/twitter/article.md"
+  }
+]

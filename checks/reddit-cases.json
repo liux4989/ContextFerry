@@ -1,0 +1,10 @@
+[
+  {
+    "name": "codex-diagram-schema-formats",
+    "source": "reddit",
+    "type": "post",
+    "url": "https://www.reddit.com/r/codex/comments/1ryuoi6/what_diagramschema_formats_codex_understands/",
+    "actual": "checks/reddit-actual/codex-diagram-schema-formats.md",
+    "baseline": "baselines/reddit/codex-diagram-schema-formats.md"
+  }
+]

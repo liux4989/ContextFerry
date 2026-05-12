@@ -27,6 +27,9 @@ importers:
       '@types/chrome':
         specifier: ^0.1.0
         version: 0.1.42
+      '@types/node':
+        specifier: ^24.12.3
+        version: 24.12.3
       '@types/turndown':
         specifier: ^5.0.5
         version: 5.0.6
@@ -36,6 +39,9 @@ importers:
       fs-extra:
         specifier: ^11.3.2
         version: 11.3.5
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
 
   packages/server:
     dependencies:

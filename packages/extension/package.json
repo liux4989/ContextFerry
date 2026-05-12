@@ -4,6 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "check-against": "tsx scripts/check-baselines.ts",
+    "check-twitter": "tsx scripts/check-baselines.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -13,8 +15,10 @@
   },
   "devDependencies": {
     "@types/chrome": "^0.1.0",
+    "@types/node": "^24.12.3",
     "@types/turndown": "^5.0.5",
     "esbuild": "^0.27.0",
-    "fs-extra": "^11.3.2"
+    "fs-extra": "^11.3.2",
+    "tsx": "^4.21.0"
   }
 }

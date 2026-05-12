@@ -6,7 +6,8 @@
       "DOM"
     ],
     "types": [
-      "chrome"
+      "chrome",
+      "node"
     ],
     "noEmit": true
   },
