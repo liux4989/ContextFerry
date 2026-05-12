@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { networkInterfaces } from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
 import { promisify } from "node:util";
@@ -12,10 +13,12 @@ import { createAgentContext, type AgentContext, type CreateContextRequest, type 
 const execFileAsync = promisify(execFile);
 
 const port = Number(process.env.PORT || 8787);
-const publicBaseUrl = process.env.PUBLIC_BASE_URL || `http://localhost:${port}`;
+const host = process.env.HOST || "0.0.0.0";
+const lanIp = getLanIp();
+const publicBaseUrl = (process.env.PUBLIC_BASE_URL || `http://${lanIp || "localhost"}:${port}`).replace(/\/+$/, "");
 const dataDir = process.env.DATA_DIR || path.resolve(process.cwd(), "data", "contexts");
 const publishMode = process.env.PUBLISH_MODE || "local";
-const publishRepoDir = process.env.PUBLISH_REPO_DIR || process.cwd();
+const publishRepoDir = process.env.PUBLISH_REPO_DIR || process.env.INIT_CWD || process.cwd();
 const publishContextDir = process.env.PUBLISH_CONTEXT_DIR || "contexts";
 const publishGitRemote = process.env.PUBLISH_GIT_REMOTE || "origin";
 const publishCommitPrefix = process.env.PUBLISH_COMMIT_PREFIX || "Publish context";
@@ -70,8 +73,12 @@ app.get("/c/:id", async (req, res) => {
 
 await mkdir(dataDir, { recursive: true });
 
-app.listen(port, () => {
+app.listen(port, host, () => {
   console.log(`Context Ferry server listening on ${publicBaseUrl} (${publishMode} publish mode)`);
+  console.log(`  - Local:   http://localhost:${port}`);
+  if (lanIp) {
+    console.log(`  - Network: http://${lanIp}:${port}`);
+  }
 });
 
 async function saveContext(context: AgentContext): Promise<void> {
@@ -319,7 +326,19 @@ function renderPage(title: string, body: string): string {
 }
 
 function toUrlPath(value: string): string {
-  return value.split(path.sep).map(encodeURIComponent).join("/");
+  return value.split(/[\\/]/).map(encodeURIComponent).join("/");
+}
+
+function getLanIp(): string | null {
+  const interfaces = networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const info of interfaces[name] || []) {
+      if (info.family === "IPv4" && !info.internal) {
+        return info.address;
+      }
+    }
+  }
+  return null;
 }
 
 function escapeHtml(value: string): string {
