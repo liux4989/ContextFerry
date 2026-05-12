@@ -2,9 +2,11 @@ import { randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { Readable } from "node:stream";
 import { promisify } from "node:util";
 import cors from "cors";
 import express from "express";
+import { google } from "googleapis";
 import { createAgentContext, type AgentContext, type CreateContextRequest, type CreateContextResponse } from "@context-ferry/shared";
 
 const execFileAsync = promisify(execFile);
@@ -18,6 +20,8 @@ const publishContextDir = process.env.PUBLISH_CONTEXT_DIR || "contexts";
 const publishGitRemote = process.env.PUBLISH_GIT_REMOTE || "origin";
 const publishCommitPrefix = process.env.PUBLISH_COMMIT_PREFIX || "Publish context";
 const githubPagesBaseUrl = process.env.GITHUB_PAGES_BASE_URL?.replace(/\/+$/, "");
+const googleDriveFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+const googleDriveFolderName = process.env.GOOGLE_DRIVE_FOLDER_NAME || "LLMRecordings";
 
 const app = express();
 
@@ -38,7 +42,7 @@ app.post("/api/contexts", async (req, res) => {
   const id = randomUUID();
   const context = createAgentContext(body, id);
   await saveContext(context);
-  const url = await publishContext(context);
+  const url = await publishContext(context, shouldPublishToGoogleDrive(body, req.query.gDrive));
   const response: CreateContextResponse = { url };
 
   res.status(201).json(response);
@@ -90,7 +94,11 @@ function contextPath(id: string): string {
   return path.join(dataDir, `${id}.json`);
 }
 
-async function publishContext(context: AgentContext): Promise<string> {
+async function publishContext(context: AgentContext, gDrive: boolean): Promise<string> {
+  if (gDrive) {
+    return publishToGoogleDrive(context);
+  }
+
   if (publishMode === "local") {
     return `${publicBaseUrl}/c/${context.id}`;
   }
@@ -99,7 +107,15 @@ async function publishContext(context: AgentContext): Promise<string> {
     return publishToGitHubPages(context);
   }
 
+  if (publishMode === "google-drive") {
+    return publishToGoogleDrive(context);
+  }
+
   throw new Error(`Unsupported PUBLISH_MODE: ${publishMode}`);
+}
+
+function shouldPublishToGoogleDrive(body: CreateContextRequest, queryValue: unknown): boolean {
+  return body.gDrive === true || queryValue === "true" || queryValue === "1";
 }
 
 async function publishToGitHubPages(context: AgentContext): Promise<string> {
@@ -120,6 +136,101 @@ async function publishToGitHubPages(context: AgentContext): Promise<string> {
   await runGit(["push", publishGitRemote, "HEAD"]);
 
   return `${githubPagesBaseUrl}/${toUrlPath(relativeDir)}/index.html`;
+}
+
+async function publishToGoogleDrive(context: AgentContext): Promise<string> {
+  const auth = new google.auth.GoogleAuth({
+    scopes: ["https://www.googleapis.com/auth/drive"]
+  });
+  const drive = google.drive({ version: "v3", auth });
+  const folderId = googleDriveFolderId || await findGoogleDriveFolderId(drive, googleDriveFolderName);
+
+  const markdown = await uploadGoogleDriveFile(drive, {
+    folderId,
+    name: `${context.id}.md`,
+    mimeType: "text/markdown",
+    body: context.markdown
+  });
+
+  return markdown.webViewLink;
+}
+
+async function uploadGoogleDriveFile(
+  drive: ReturnType<typeof google.drive>,
+  file: { folderId: string; name: string; mimeType: string; body: string }
+): Promise<{ id: string; webViewLink: string }> {
+  const upload = await drive.files.create({
+    requestBody: {
+      name: file.name,
+      mimeType: file.mimeType,
+      parents: [file.folderId]
+    },
+    media: {
+      mimeType: file.mimeType,
+      body: Readable.from([file.body])
+    },
+    fields: "id",
+    supportsAllDrives: true
+  });
+
+  const fileId = upload.data.id;
+  if (!fileId) {
+    throw new Error(`Google Drive upload for ${file.name} did not return a file id`);
+  }
+
+  await drive.permissions.create({
+    fileId,
+    requestBody: {
+      type: "anyone",
+      role: "reader"
+    },
+    supportsAllDrives: true
+  });
+
+  const published = await drive.files.get({
+    fileId,
+    fields: "webViewLink",
+    supportsAllDrives: true
+  });
+
+  return {
+    id: fileId,
+    webViewLink: published.data.webViewLink || `https://drive.google.com/file/d/${fileId}/view`
+  };
+}
+
+async function findGoogleDriveFolderId(drive: ReturnType<typeof google.drive>, folderName: string): Promise<string> {
+  const query = [
+    "mimeType = 'application/vnd.google-apps.folder'",
+    "trashed = false",
+    `name = '${escapeDriveQueryValue(folderName)}'`
+  ].join(" and ");
+
+  const result = await drive.files.list({
+    q: query,
+    fields: "files(id, name)",
+    pageSize: 2,
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true
+  });
+  const folders = result.data.files || [];
+
+  if (folders.length === 0) {
+    throw new Error(`Google Drive folder not found: ${folderName}`);
+  }
+  if (folders.length > 1) {
+    throw new Error(`Multiple Google Drive folders named ${folderName}; set GOOGLE_DRIVE_FOLDER_ID`);
+  }
+
+  const folderId = folders[0].id;
+  if (!folderId) {
+    throw new Error(`Google Drive folder ${folderName} did not include an id`);
+  }
+  return folderId;
+}
+
+function escapeDriveQueryValue(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
 async function runGit(args: string[]): Promise<void> {

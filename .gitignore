@@ -1,5 +1,7 @@
 node_modules/
 dist/
+.secrets/
+.env*
 data/
 .DS_Store
 *.log

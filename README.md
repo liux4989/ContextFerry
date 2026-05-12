@@ -59,6 +59,8 @@ Response:
 
 The public context page is `GET /c/:id`. The raw agent context is `GET /api/contexts/:id` as `text/markdown`.
 
+Set `gDrive: true` in the JSON body, or call `POST /api/contexts?gDrive=true`, to publish that request to Google Drive instead of the configured default publisher.
+
 ## GitHub Pages Publishing
 
 The extension still posts extracted content to the local server. The server can then publish the generated static artifact to a GitHub Pages repo and return the Pages link.
@@ -96,3 +98,44 @@ Then it runs `git add`, `git commit`, and `git push`, and returns:
 ```
 
 GitHub Pages may take a short moment to serve the new file after push succeeds.
+
+## Google Drive Publishing
+
+The extension still posts extracted content to the local server. The server can also upload the generated Markdown context to Google Drive and return the Drive file link. Google Drive is available either as the server default or as a per-request alternative to GitHub Pages with `gDrive: true`.
+
+```bash
+PUBLISH_MODE=google-drive \
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/application-default-credentials.json \
+npm run dev:server
+```
+
+For this repo, use:
+
+```bash
+npm run dev:server:gDrive
+```
+
+That script loads `.env.google-drive`, which should point `GOOGLE_APPLICATION_CREDENTIALS` at the local OAuth Application Default Credentials JSON.
+
+`GOOGLE_APPLICATION_CREDENTIALS` can point at an Application Default Credentials JSON file generated from an OAuth desktop client. This is the preferred local setup when service account key creation is disabled by organisation policy.
+
+By default, Drive publishing looks for a folder named `LLMRecordings`. You can override the folder lookup with either:
+
+```bash
+GOOGLE_DRIVE_FOLDER_NAME=AnotherFolder
+GOOGLE_DRIVE_FOLDER_ID=your-drive-folder-id
+```
+
+In `google-drive` mode, `POST /api/contexts` uploads:
+
+```text
+:id.md
+```
+
+The uploaded file is the final agent-friendly Markdown artifact. The server grants `anyone` reader access to the uploaded file and returns the Google Drive Markdown file link:
+
+```json
+{ "url": "https://drive.google.com/file/d/FILE_ID/view?usp=drivesdk" }
+```
+
+If you use a service account, share the target Drive folder with the service account email before publishing. If you use OAuth user credentials, the authenticated user needs access to the folder.

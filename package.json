@@ -10,6 +10,7 @@
     "check-twitter": "pnpm --filter @context-ferry/extension check-against -- --cases=../../checks/twitter-cases.json",
     "dev:server": "pnpm --filter @context-ferry/server dev",
     "dev:server:pages": "PUBLISH_MODE=github-pages GITHUB_PAGES_BASE_URL=https://liux4989.github.io/ContextFerry PUBLISH_REPO_DIR=$PWD pnpm --filter @context-ferry/server dev",
+    "dev:server:gDrive": "set -a; . ./.env.google-drive; set +a; PUBLISH_MODE=google-drive pnpm --filter @context-ferry/server dev",
     "typecheck": "pnpm --filter @context-ferry/shared typecheck && pnpm --filter @context-ferry/server typecheck && pnpm --filter @context-ferry/extension typecheck"
   },
   "devDependencies": {
