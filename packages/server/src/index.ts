@@ -13,9 +13,10 @@ import { createAgentContext, type AgentContext, type CreateContextRequest, type 
 const execFileAsync = promisify(execFile);
 
 const port = Number(process.env.PORT || 8787);
-const host = process.env.HOST || "0.0.0.0";
-const lanIp = getLanIp();
-const publicBaseUrl = (process.env.PUBLIC_BASE_URL || `http://${lanIp || "localhost"}:${port}`).replace(/\/+$/, "");
+const tailscaleIp = getTailscaleIp();
+const host = resolveHost(process.env.HOST, "0.0.0.0");
+const publicHost = resolveHost(process.env.PUBLIC_HOST, tailscaleIp || "localhost");
+const publicBaseUrl = (process.env.PUBLIC_BASE_URL || `http://${publicHost}:${port}`).replace(/\/+$/, "");
 const dataDir = process.env.DATA_DIR || path.resolve(process.cwd(), "data", "contexts");
 const publishMode = process.env.PUBLISH_MODE || "local";
 const publishRepoDir = process.env.PUBLISH_REPO_DIR || process.env.INIT_CWD || process.cwd();
@@ -74,10 +75,13 @@ app.get("/c/:id", async (req, res) => {
 await mkdir(dataDir, { recursive: true });
 
 app.listen(port, host, () => {
-  console.log(`Context Ferry server listening on ${publicBaseUrl} (${publishMode} publish mode)`);
+  console.log(`Context Ferry API listening on ${host}:${port} (${publishMode} publish mode)`);
   console.log(`  - Local:   http://localhost:${port}`);
-  if (lanIp) {
-    console.log(`  - Network: http://${lanIp}:${port}`);
+  if (tailscaleIp) {
+    console.log(`  - Tailscale: http://${tailscaleIp}:${port}`);
+  }
+  if (publishMode === "local") {
+    console.log(`  - Local-mode link base: ${publicBaseUrl}`);
   }
 });
 
@@ -329,16 +333,32 @@ function toUrlPath(value: string): string {
   return value.split(/[\\/]/).map(encodeURIComponent).join("/");
 }
 
-function getLanIp(): string | null {
+function getTailscaleIp(): string | null {
   const interfaces = networkInterfaces();
   for (const name of Object.keys(interfaces)) {
     for (const info of interfaces[name] || []) {
-      if (info.family === "IPv4" && !info.internal) {
+      if (info.family === "IPv4" && !info.internal && isTailscaleIp(info.address)) {
         return info.address;
       }
     }
   }
   return null;
+}
+
+function resolveHost(value: string | undefined, fallback: string): string {
+  if (!value) return fallback;
+  if (value === "tailscale") return tailscaleIp || fallback;
+  if (value === "localhost") return "localhost";
+  return value;
+}
+
+function isTailscaleIp(address: string): boolean {
+  const parts = address.split(".").map((part) => Number(part));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return false;
+  }
+
+  return parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127;
 }
 
 function escapeHtml(value: string): string {

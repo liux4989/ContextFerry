@@ -31,6 +31,12 @@ input {
   font: inherit;
 }
 
+.serverConfig {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
 .primaryAction {
   margin-top: 14px;
 }

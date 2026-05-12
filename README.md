@@ -24,7 +24,37 @@ Load the extension:
 3. Click "Load unpacked".
 4. Select `packages/extension/dist`.
 
-The server runs at `http://localhost:8787` by default. The extension popup lets you change that endpoint.
+The server API runs at `http://localhost:8787` by default. The extension endpoint only controls where extracted content is sent. The returned publish link is controlled by the server publish mode: use Google Drive or GitHub Pages when the link must be shareable outside your tailnet.
+
+Optional network settings:
+
+```bash
+HOST=tailscale PUBLIC_HOST=tailscale npm run dev:server
+```
+
+For the common Tailscale + Google Drive setup, use:
+
+```bash
+pnpm run dev:server:tailscale:gDrive
+```
+
+For Tailscale + GitHub Pages publishing, use:
+
+```bash
+pnpm run dev:server:tailscale:pages
+```
+
+- `HOST`: listen address. Use `tailscale`, `localhost`, `0.0.0.0`, or a concrete IP.
+- `PUBLIC_HOST`: generated link host for `local` publish mode only. Use `tailscale`, `localhost`, or a concrete IP.
+- `PUBLIC_BASE_URL`: full local-mode URL override.
+
+The extension popup has one server endpoint field:
+
+- `localhost`: posts to `http://localhost:8787`.
+- `cr7rog` or `100.x.x.x`: posts to that Tailscale host and adds port `8787` when omitted.
+- `https://host`: posts to the full remote URL as provided.
+
+This field does not decide the returned public link. Start the server with `dev:server:tailscale:gDrive` or `dev:server:tailscale:pages` when you want the response URL to be a Google Drive or GitHub Pages link.
 
 ## Workflow
 

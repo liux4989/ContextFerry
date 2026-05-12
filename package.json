@@ -9,8 +9,11 @@
     "check-reddit": "pnpm --filter @context-ferry/extension check-against -- --cases=../../checks/reddit-cases.json",
     "check-twitter": "pnpm --filter @context-ferry/extension check-against -- --cases=../../checks/twitter-cases.json",
     "dev:server": "pnpm --filter @context-ferry/server dev",
+    "dev:server:tailscale": "cross-env HOST=tailscale PUBLIC_HOST=tailscale pnpm --filter @context-ferry/server dev",
     "dev:server:pages": "cross-env PUBLISH_MODE=github-pages GITHUB_PAGES_BASE_URL=https://liux4989.github.io/ContextFerry pnpm --filter @context-ferry/server dev",
+    "dev:server:tailscale:pages": "cross-env HOST=tailscale PUBLIC_HOST=tailscale PUBLISH_MODE=github-pages GITHUB_PAGES_BASE_URL=https://liux4989.github.io/ContextFerry pnpm --filter @context-ferry/server dev",
     "dev:server:gDrive": "dotenv -e ./.env.google-drive -- cross-env PUBLISH_MODE=google-drive pnpm --filter @context-ferry/server dev",
+    "dev:server:tailscale:gDrive": "dotenv -e ./.env.google-drive -- cross-env HOST=tailscale PUBLIC_HOST=tailscale PUBLISH_MODE=google-drive pnpm --filter @context-ferry/server dev",
     "typecheck": "pnpm --filter @context-ferry/shared typecheck && pnpm --filter @context-ferry/server typecheck && pnpm --filter @context-ferry/extension typecheck"
   },
   "devDependencies": {

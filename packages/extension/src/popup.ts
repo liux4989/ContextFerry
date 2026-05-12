@@ -2,8 +2,13 @@ import type { AgentDocument, CreateContextResponse } from "@context-ferry/shared
 import type { ExtractPageResponse } from "./messages";
 
 const defaultServerUrl = "http://localhost:8787";
+const defaultServerHost = "localhost";
+const defaultServerPort = "8787";
+const publishTimeoutMs = 8_000;
+
 const storageKeys = {
   serverUrl: "serverUrl",
+  serverHost: "serverHost",
   batch: "batch"
 } as const;
 
@@ -15,13 +20,24 @@ const els = {
   publish: byId<HTMLButtonElement>("publish"),
   result: byId<HTMLElement>("result"),
   contextLink: byId<HTMLInputElement>("contextLink"),
-  sourceList: byId<HTMLUListElement>("sourceList")
+  sourceList: byId<HTMLUListElement>("sourceList"),
+  serverHost: byId<HTMLInputElement>("serverHost")
 };
 
 void init();
 
 async function init(): Promise<void> {
-  const stored = await chrome.storage.local.get([storageKeys.serverUrl, storageKeys.batch]);
+  const stored = await chrome.storage.local.get([
+    storageKeys.serverUrl,
+    storageKeys.serverHost,
+    storageKeys.batch
+  ]);
+  const storedServerUrl = stored[storageKeys.serverUrl];
+  const storedServerHost = stored[storageKeys.serverHost];
+  els.serverHost.value = typeof storedServerHost === "string"
+    ? storedServerHost
+    : typeof storedServerUrl === "string" ? storedServerUrl : defaultServerHost;
+
   const storedBatch = stored[storageKeys.batch];
   batch = isAgentDocumentArray(storedBatch) ? storedBatch : [];
   renderSources();
@@ -71,19 +87,30 @@ async function publishSelectedSources(): Promise<void> {
 
 async function createContext(sources: AgentDocument[], title: string): Promise<CreateContextResponse> {
   const serverUrl = normalizedServerUrl();
-  await chrome.storage.local.set({ [storageKeys.serverUrl]: serverUrl });
+  await chrome.storage.local.set({
+    [storageKeys.serverUrl]: serverUrl,
+    [storageKeys.serverHost]: els.serverHost.value.trim()
+  });
 
   let response: Response;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), publishTimeoutMs);
   try {
     response = await fetch(`${serverUrl}/api/contexts`, {
       method: "POST",
       headers: {
         "content-type": "application/json"
       },
+      signal: controller.signal,
       body: JSON.stringify({ title, sources })
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(`Server timed out after ${publishTimeoutMs / 1000}s at ${serverUrl}`);
+    }
     throw new Error(`Could not reach server at ${serverUrl}`);
+  } finally {
+    clearTimeout(timeout);
   }
 
   if (!response.ok) {
@@ -177,7 +204,23 @@ function createSourceItem(source: AgentDocument): HTMLLIElement {
 }
 
 function normalizedServerUrl(): string {
-  return defaultServerUrl.replace(/\/+$/, "");
+  return normalizeServerHost(els.serverHost.value);
+}
+
+function normalizeServerHost(value: string): string {
+  const host = value.trim();
+  if (!host) {
+    throw new Error("Server host is required.");
+  }
+  if (/^https?:\/\//i.test(host)) {
+    return host.replace(/\/+$/, "");
+  }
+
+  return `http://${host}${hasPort(host) ? "" : `:${defaultServerPort}`}`;
+}
+
+function hasPort(host: string): boolean {
+  return /:\d+$/.test(host);
 }
 
 function setButtonsDisabled(disabled: boolean): void {
