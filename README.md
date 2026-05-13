@@ -63,6 +63,12 @@ This field does not decide the returned public link. Start the server with `dev:
 - `Publish current`: publishes the current page and returns one context link.
 - `Publish batch`: publishes every batched page as one combined context link.
 
+## Source Access Types
+
+Different source pages fail for different reasons. A page can be public but still not be readable by the current agent extraction path, and a page can require login but still be readable once the extension is running inside the logged-in browser session.
+
+See [docs/source-access-types.md](/Users/cr7sund/Documents/AppDevelopment/labs/ContextFerry/docs/source-access-types.md) for the concrete types we use to reason about provider support.
+
 ## Packages
 
 - `packages/shared`: shared extraction input schema and Markdown serialization.
