@@ -1,11 +1,23 @@
 {
-  "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "context-ferry-worker",
-  "main": "src/index.ts",
-  "compatibility_date": "2026-05-14",
-  "kv_namespaces": [
-    {
-      "binding": "CONTEXTS"
-    }
-  ]
+	"$schema": "../../node_modules/wrangler/config-schema.json",
+	"name": "contextferry",
+	"account_id": "b3f2d220197bf66837f1e05c240cf8b1",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-05-14",
+	"workers_dev": true,
+	"preview_urls": false,
+	"observability": {
+		"enabled": true
+	},
+	"kv_namespaces": [
+		{
+			"binding": "CONTEXTS",
+			"id": "815f0d0d88c5491192a747931be9c6b7",
+			"preview_id": "168527ecb3a3499285e640c0f1a3de5d"
+		}
+	],
+	// If you later attach a custom domain, set this so returned links use it:
+	"vars": {
+		// "PUBLIC_BASE_URL": "https://context-ferry.example.com"
+	}
 }

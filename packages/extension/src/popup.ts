@@ -2,9 +2,9 @@ import type { AgentDocument, CreateContextResponse } from "@context-ferry/shared
 import type { ExtractPageResponse } from "./messages";
 
 const publishTimeoutMs = 8_000;
+const workerOrigin = "https://contextferry.liux4989.workers.dev";
 
 const storageKeys = {
-  workerUrl: "workerUrl",
   batch: "batch"
 } as const;
 
@@ -16,20 +16,13 @@ const els = {
   publish: byId<HTMLButtonElement>("publish"),
   result: byId<HTMLElement>("result"),
   contextLink: byId<HTMLInputElement>("contextLink"),
-  sourceList: byId<HTMLUListElement>("sourceList"),
-  workerUrl: byId<HTMLInputElement>("workerUrl")
+  sourceList: byId<HTMLUListElement>("sourceList")
 };
 
 void init();
 
 async function init(): Promise<void> {
-  const stored = await chrome.storage.local.get([
-    storageKeys.workerUrl,
-    storageKeys.batch
-  ]);
-  const storedWorkerUrl = stored[storageKeys.workerUrl];
-  els.workerUrl.value = typeof storedWorkerUrl === "string" ? storedWorkerUrl : "";
-
+  const stored = await chrome.storage.local.get([storageKeys.batch]);
   const storedBatch = stored[storageKeys.batch];
   batch = isAgentDocumentArray(storedBatch) ? storedBatch : [];
   renderSources();
@@ -78,16 +71,11 @@ async function publishSelectedSources(): Promise<void> {
 }
 
 async function createContext(sources: AgentDocument[], title: string): Promise<CreateContextResponse> {
-  const workerUrl = normalizedWorkerUrl();
-  await chrome.storage.local.set({
-    [storageKeys.workerUrl]: workerUrl
-  });
-
   let response: Response;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), publishTimeoutMs);
   try {
-    response = await fetch(`${workerUrl}/api/contexts`, {
+    response = await fetch(`${workerOrigin}/api/contexts`, {
       method: "POST",
       headers: {
         "content-type": "application/json"
@@ -97,9 +85,9 @@ async function createContext(sources: AgentDocument[], title: string): Promise<C
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error(`Worker timed out after ${publishTimeoutMs / 1000}s at ${workerUrl}`);
+      throw new Error(`Worker timed out after ${publishTimeoutMs / 1000}s at ${workerOrigin}`);
     }
-    throw new Error(`Could not reach Worker at ${workerUrl}`);
+    throw new Error(`Could not reach Worker at ${workerOrigin}`);
   } finally {
     clearTimeout(timeout);
   }
@@ -192,33 +180,6 @@ function createSourceItem(source: AgentDocument): HTMLLIElement {
   content.append(title, meta);
   item.append(button, content);
   return item;
-}
-
-function normalizedWorkerUrl(): string {
-  return normalizeWorkerUrl(els.workerUrl.value);
-}
-
-function normalizeWorkerUrl(value: string): string {
-  const raw = value.trim();
-  if (!raw) {
-    throw new Error("Worker URL is required.");
-  }
-
-  let url: URL;
-  try {
-    url = new URL(raw);
-  } catch {
-    throw new Error("Worker URL must be a full https URL.");
-  }
-
-  if (url.protocol !== "https:") {
-    throw new Error("Worker URL must use https.");
-  }
-
-  url.pathname = "";
-  url.search = "";
-  url.hash = "";
-  return url.toString().replace(/\/+$/, "");
 }
 
 function setButtonsDisabled(disabled: boolean): void {

@@ -55,7 +55,7 @@ importers:
         version: link:../shared
     devDependencies:
       wrangler:
-        specifier: ^4.72.1
+        specifier: ^4.90.1
         version: 4.90.1
 
 packages:

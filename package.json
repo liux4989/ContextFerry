@@ -8,8 +8,7 @@
     "check-against": "pnpm --filter @context-ferry/extension check-against",
     "check-reddit": "pnpm --filter @context-ferry/extension check-against -- --cases=../../checks/reddit-cases.json",
     "check-twitter": "pnpm --filter @context-ferry/extension check-against -- --cases=../../checks/twitter-cases.json",
-    "dev:worker": "pnpm --filter @context-ferry/worker dev",
-    "deploy:worker": "pnpm --filter @context-ferry/worker deploy",
+    "deploy:worker": "set -a; [ ! -f .env.cloudflare ] || . ./.env.cloudflare; set +a; pnpm --filter @context-ferry/worker run deploy:worker",
     "typecheck": "pnpm --filter @context-ferry/shared typecheck && pnpm --filter @context-ferry/worker typecheck && pnpm --filter @context-ferry/extension typecheck"
   },
   "devDependencies": {
