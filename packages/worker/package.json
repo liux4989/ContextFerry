@@ -1,0 +1,18 @@
+{
+  "name": "@context-ferry/worker",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@context-ferry/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "wrangler": "^4.72.1"
+  }
+}

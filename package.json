@@ -4,21 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm --filter @context-ferry/shared build && pnpm --filter @context-ferry/server build && pnpm --filter @context-ferry/extension build",
+    "build": "pnpm --filter @context-ferry/shared build && pnpm --filter @context-ferry/worker build && pnpm --filter @context-ferry/extension build",
     "check-against": "pnpm --filter @context-ferry/extension check-against",
     "check-reddit": "pnpm --filter @context-ferry/extension check-against -- --cases=../../checks/reddit-cases.json",
     "check-twitter": "pnpm --filter @context-ferry/extension check-against -- --cases=../../checks/twitter-cases.json",
-    "dev:server": "pnpm --filter @context-ferry/server dev",
-    "dev:server:tailscale": "cross-env HOST=tailscale PUBLIC_HOST=tailscale pnpm --filter @context-ferry/server dev",
-    "dev:server:pages": "cross-env PUBLISH_MODE=github-pages GITHUB_PAGES_BASE_URL=https://liux4989.github.io/ContextFerry pnpm --filter @context-ferry/server dev",
-    "dev:server:tailscale:pages": "cross-env HOST=tailscale PUBLIC_HOST=tailscale PUBLISH_MODE=github-pages GITHUB_PAGES_BASE_URL=https://liux4989.github.io/ContextFerry pnpm --filter @context-ferry/server dev",
-    "dev:server:gDrive": "dotenv -e ./.env.google-drive -- cross-env PUBLISH_MODE=google-drive pnpm --filter @context-ferry/server dev",
-    "dev:server:tailscale:gDrive": "dotenv -e ./.env.google-drive -- cross-env HOST=tailscale PUBLIC_HOST=tailscale PUBLISH_MODE=google-drive pnpm --filter @context-ferry/server dev",
-    "typecheck": "pnpm --filter @context-ferry/shared typecheck && pnpm --filter @context-ferry/server typecheck && pnpm --filter @context-ferry/extension typecheck"
+    "dev:worker": "pnpm --filter @context-ferry/worker dev",
+    "deploy:worker": "pnpm --filter @context-ferry/worker deploy",
+    "typecheck": "pnpm --filter @context-ferry/shared typecheck && pnpm --filter @context-ferry/worker typecheck && pnpm --filter @context-ferry/extension typecheck"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
-    "dotenv-cli": "^7.4.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.90.1"
   }
 }

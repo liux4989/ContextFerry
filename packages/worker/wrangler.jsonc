@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "context-ferry-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-14",
+  "kv_namespaces": [
+    {
+      "binding": "CONTEXTS"
+    }
+  ]
+}

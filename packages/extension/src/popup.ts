@@ -1,14 +1,10 @@
 import type { AgentDocument, CreateContextResponse } from "@context-ferry/shared";
 import type { ExtractPageResponse } from "./messages";
 
-const defaultServerUrl = "http://localhost:8787";
-const defaultServerHost = "localhost";
-const defaultServerPort = "8787";
 const publishTimeoutMs = 8_000;
 
 const storageKeys = {
-  serverUrl: "serverUrl",
-  serverHost: "serverHost",
+  workerUrl: "workerUrl",
   batch: "batch"
 } as const;
 
@@ -21,22 +17,18 @@ const els = {
   result: byId<HTMLElement>("result"),
   contextLink: byId<HTMLInputElement>("contextLink"),
   sourceList: byId<HTMLUListElement>("sourceList"),
-  serverHost: byId<HTMLInputElement>("serverHost")
+  workerUrl: byId<HTMLInputElement>("workerUrl")
 };
 
 void init();
 
 async function init(): Promise<void> {
   const stored = await chrome.storage.local.get([
-    storageKeys.serverUrl,
-    storageKeys.serverHost,
+    storageKeys.workerUrl,
     storageKeys.batch
   ]);
-  const storedServerUrl = stored[storageKeys.serverUrl];
-  const storedServerHost = stored[storageKeys.serverHost];
-  els.serverHost.value = typeof storedServerHost === "string"
-    ? storedServerHost
-    : typeof storedServerUrl === "string" ? storedServerUrl : defaultServerHost;
+  const storedWorkerUrl = stored[storageKeys.workerUrl];
+  els.workerUrl.value = typeof storedWorkerUrl === "string" ? storedWorkerUrl : "";
 
   const storedBatch = stored[storageKeys.batch];
   batch = isAgentDocumentArray(storedBatch) ? storedBatch : [];
@@ -86,17 +78,16 @@ async function publishSelectedSources(): Promise<void> {
 }
 
 async function createContext(sources: AgentDocument[], title: string): Promise<CreateContextResponse> {
-  const serverUrl = normalizedServerUrl();
+  const workerUrl = normalizedWorkerUrl();
   await chrome.storage.local.set({
-    [storageKeys.serverUrl]: serverUrl,
-    [storageKeys.serverHost]: els.serverHost.value.trim()
+    [storageKeys.workerUrl]: workerUrl
   });
 
   let response: Response;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), publishTimeoutMs);
   try {
-    response = await fetch(`${serverUrl}/api/contexts`, {
+    response = await fetch(`${workerUrl}/api/contexts`, {
       method: "POST",
       headers: {
         "content-type": "application/json"
@@ -106,15 +97,15 @@ async function createContext(sources: AgentDocument[], title: string): Promise<C
     });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error(`Server timed out after ${publishTimeoutMs / 1000}s at ${serverUrl}`);
+      throw new Error(`Worker timed out after ${publishTimeoutMs / 1000}s at ${workerUrl}`);
     }
-    throw new Error(`Could not reach server at ${serverUrl}`);
+    throw new Error(`Could not reach Worker at ${workerUrl}`);
   } finally {
     clearTimeout(timeout);
   }
 
   if (!response.ok) {
-    throw new Error(`Server returned ${response.status}`);
+    throw new Error(`Worker returned ${response.status}`);
   }
 
   return response.json() as Promise<CreateContextResponse>;
@@ -203,24 +194,31 @@ function createSourceItem(source: AgentDocument): HTMLLIElement {
   return item;
 }
 
-function normalizedServerUrl(): string {
-  return normalizeServerHost(els.serverHost.value);
+function normalizedWorkerUrl(): string {
+  return normalizeWorkerUrl(els.workerUrl.value);
 }
 
-function normalizeServerHost(value: string): string {
-  const host = value.trim();
-  if (!host) {
-    throw new Error("Server host is required.");
-  }
-  if (/^https?:\/\//i.test(host)) {
-    return host.replace(/\/+$/, "");
+function normalizeWorkerUrl(value: string): string {
+  const raw = value.trim();
+  if (!raw) {
+    throw new Error("Worker URL is required.");
   }
 
-  return `http://${host}${hasPort(host) ? "" : `:${defaultServerPort}`}`;
-}
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error("Worker URL must be a full https URL.");
+  }
 
-function hasPort(host: string): boolean {
-  return /:\d+$/.test(host);
+  if (url.protocol !== "https:") {
+    throw new Error("Worker URL must use https.");
+  }
+
+  url.pathname = "";
+  url.search = "";
+  url.hash = "";
+  return url.toString().replace(/\/+$/, "");
 }
 
 function setButtonsDisabled(disabled: boolean): void {

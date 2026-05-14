@@ -23,7 +23,6 @@ export type AgentContext = {
 export type CreateContextRequest = {
   title?: string;
   sources: AgentDocument[];
-  gDrive?: boolean;
 };
 
 export type CreateContextResponse = {

@@ -3,5 +3,6 @@ dist/
 .secrets/
 .env*
 data/
+.wrangler/
 .DS_Store
 *.log
